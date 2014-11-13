@@ -114,7 +114,9 @@ if app.config.get("AUTOGENERATE_MODEL_ADMIN", True):
         def __init__(self, name, bases, d):
             super(self.__class__, self).__init__(name, bases, d)
             if name != "Model":
-                model_classes.append(self)
+                m = re.search(r'\.(.*)\.models', self.__module__)
+                categoryName = m.group(1)
+                model_classes.append((self, categoryName))
 
     db.Model = sqlalchemy.declarative_base(cls=sqlalchemy.Model,
         name="Model", mapper=sqlalchemy.signalling_mapper,
@@ -132,6 +134,6 @@ for root, dirname, files in os.walk(app.config["BASEDIR"]):
             module = ".".join(relative.split(os.sep))
             __import__(module, level=-1)
 
-for cls in model_classes:
+for cls, categoryName in model_classes:
     admin.add_view(SecuredModelView(cls, db.session,
-        category="CRUD"))
+        category=categoryName))
